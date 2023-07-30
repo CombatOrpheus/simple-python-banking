@@ -14,10 +14,15 @@ mumero_saques = 0
 LIMITE_SAQUES = 3
 
 def parse_input(parsing_function):
+    value = 0
     try:
-        return parsing_function(input())
-    except ValueError:
+        value = parsing_function(input())
+    except:
         print("Valor inválido. Por favor, utilize apenas números e '.'.")
+    else:
+        return value
+    finally:
+        return value if value != 0 else 0
 
 
 def print_no_newline(string):
