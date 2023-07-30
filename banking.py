@@ -39,6 +39,7 @@ while True:
             deposito = parse_input(float)
             saldo += deposito
             print(f'Saldo: R${saldo:.2f}')
+            extrato += f'Depósito: R${deposito:.2f}\n'
         case "s":
             print("Saque")
             print_no_newline(f'Digite o valor a ser sacado, observando o limite de R${limite:.2f} por saque: R$')
@@ -51,17 +52,20 @@ while True:
                 prinf("Limite de saques atingido")
             else:
                 print(f'Saque realizado. Valor: R${saque:.2f}')
-                print(f'Saldo atual: R${saldo:.2f}')
+                extrato += f'Saque: R${saque:.2f}\n'
                 saldo -= saque
+                print(f'Saldo atual: R${saldo:.2f}')
                 LIMITE_SAQUES -= 1
         case "e":
-            print("Extrato")
+            print("Extrato\n")
+            print(extrato, '\n')
             print_no_newline(f'Saldo atual: R${saldo:.2f}\nLimite de Saque atual: R${limite}')
         case "l":
             print(f'Alterar limite de saque. Limite atual: R${limite:.2f}')
             print_no_newline("Digite o novo valor desejado: R$")
             limite = parse_input(int)
             print_no_newline(f'Novo limite para saques: R${limite:.2f}')
+            extrato += f'Alteração de limite: R${limite:.2f}\n'
         case "q":
             break
         case _:
