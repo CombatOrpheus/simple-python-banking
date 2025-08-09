@@ -1,92 +1,155 @@
-from typing import List, Callable
-menu = """
+from typing import List, Callable, TypeVar
 
-[d] Depositar
-[s] Sacar
-[e] Extrato
-[l] Alterar Limite de Saque
-[q] Sair
-=> """
+T = TypeVar('T')
 
-saldo = 0
-limite = 500
-extrato = ""
-limite_saques = 3
+class ContaBancaria:
+    """
+    Representa uma conta bancária com funcionalidades de depósito, saque,
+    visualização de extrato e alteração de limite de saque.
+    """
+    def __init__(self, saldo_inicial: float = 0, limite: float = 500, limite_saques: int = 3):
+        """
+        Inicializa a conta bancária.
 
-def parse_input(parsing_function: Callable[[any], str]):
-    value = 0
-    try:
-        value = parsing_function(input("Digite o valor da operação: R$"))
-    except:
-        print("Valor inválido. Por favor, utilize apenas números e '.'.")
-    else:
-        return value
-    finally:
-        return value if value != 0 else 0
+        Args:
+            saldo_inicial (float): O saldo inicial da conta.
+            limite (float): O limite para cada saque.
+            limite_saques (int): O número máximo de saques permitidos.
+        """
+        self.saldo: float = saldo_inicial
+        self.limite: float = limite
+        self.extrato: List[str] = []
+        self.numero_saques: int = 0
+        self.limite_saques: int = limite_saques
 
+    def deposito(self, valor: float) -> None:
+        """
+        Realiza um depósito na conta.
 
-def deposito(saldo: float, valor: float, extrato: List[str]) -> (float, str):
-    saldo += valor
-    mensagem = f'Depósito: R${valor:.2f}\n'
-    extrato += mensagem
-    print(mensagem)
-    return (saldo, extrato)
+        Args:
+            valor (float): O valor a ser depositado.
+        """
+        if valor > 0:
+            self.saldo += valor
+            mensagem = f'Depósito: R${valor:.2f}\n'
+            self.extrato.append(mensagem)
+            print(mensagem)
+        else:
+            print("Operação falhou! O valor informado é inválido.")
 
+    def saque(self, valor: float) -> None:
+        """
+        Realiza um saque da conta, se as condições forem atendidas.
 
-def saque(saldo: float, valor: float, limite_operacao: int, extrato: List[str], *, limite_saques: int = limite_saques) -> (float, str, int):
-    if saldo < valor:
-        print("Saldo insuficiente")
-        return (saldo, valor, limite)
-    elif valor > limite:
-        print("Limite excede o permitido para esta operação")
-        return (saldo, valor, limite)
-    else:
-        mensagem = f'Saque: R${valor:.2f}\n'
-        extrato += mensagem
+        Args:
+            valor (float): O valor a ser sacado.
+        """
+        excedeu_saldo = valor > self.saldo
+        excedeu_limite = valor > self.limite
+        excedeu_saques = self.numero_saques >= self.limite_saques
+
+        if excedeu_saldo:
+            print("Operação falhou! Você não tem saldo suficiente.")
+        elif excedeu_limite:
+            print("Operação falhou! O valor do saque excede o limite.")
+        elif excedeu_saques:
+            print("Operação falhou! Número máximo de saques excedido.")
+        elif valor > 0:
+            self.saldo -= valor
+            mensagem = f'Saque: R${valor:.2f}\n'
+            self.extrato.append(mensagem)
+            self.numero_saques += 1
+            print(mensagem)
+        else:
+            print("Operação falhou! O valor informado é inválido.")
+
+    def exibir_extrato(self) -> None:
+        """Exibe o extrato de transações da conta."""
+        print("\n================ EXTRATO ================")
+        if not self.extrato:
+            print("Não foram realizadas movimentações.")
+        else:
+            for transacao in self.extrato:
+                print(transacao, end="")
+        print(f"\nSaldo: R$ {self.saldo:.2f}")
+        print("==========================================")
+
+    def alterar_limite(self, novo_limite: float) -> None:
+        """
+        Altera o limite de saque da conta.
+
+        Args:
+            novo_limite (float): O novo valor do limite de saque.
+        """
+        self.limite = novo_limite
+        mensagem = f'Alteração de limite. Novo valor: R${novo_limite:.2f}'
+        self.extrato.append(mensagem)
         print(mensagem)
-        saldo -= valor 
-        print(f'Saldo atual: R${saldo:.2f}')
-        return (saldo, extrato, limite_saques - 1)
+
+    def adicionar_limite_saques(self, valor: int) -> None:
+        """
+        Adiciona mais saques ao limite de saques.
+
+        Args:
+            valor (int): O número de saques a serem adicionados.
+        """
+        self.limite_saques += valor
+        print(f"Limite de saques aumentado para {self.limite_saques}.")
 
 
-def exibir_extrato(extrato: List[str]):
-    mensagem = '=' * 10 + "Extrato" + '=' * 10 + '\n'
-    print(mensagem)
-    print(extrato)
-    print('=' * len(mensagem))
+def parse_input(prompt: str, parsing_function: Callable[[str], T]) -> T:
+    """
+    Solicita uma entrada do usuário e a converte para o tipo desejado.
 
+    Args:
+        prompt (str): A mensagem a ser exibida para o usuário.
+        parsing_function (Callable[[str], T]): A função para converter a entrada.
 
-def alterar_limite(valor: int, extrato: str) -> (int, str):
-    limite = valor
-    mensagem = f'Alteração de limite. Novo valor: R${valor:.2f}'
-    extrato += mensagem
-    print(mensagem)
-    return (limite, extrato)
+    Returns:
+        T: O valor de entrada convertido.
+    """
+    while True:
+        try:
+            return parsing_function(input(prompt))
+        except ValueError:
+            print("Valor inválido. Por favor, utilize apenas números e '.'.")
 
-def adicionar_limite_saques(limite_saques: int, adicionar: int) -> int:
-    return limite_saques + adicionar
+def main() -> None:
+    """Função principal que executa o programa de terminal bancário."""
+    menu = """
 
+    [d] Depositar
+    [s] Sacar
+    [e] Extrato
+    [l] Alterar Limite de Saque
+    [ls] Adicionar Limite de Saques
+    [q] Sair
+    => """
 
-while True:
-    opcao = input(menu)
-    match opcao:
-        case "d":
-            valor = parse_input(float)
-            saldo, extrato = deposito(saldo, valor, extrato)
-        case "s":
-            print(f'Limite para saques: R${limite:.2f}')
-            valor = parse_input(int)
-            saldo, extrato, limite_saques = saque(saldo, valor, limite, extrato, limite_saques = limite_saques)
-        case "e":
-            exibir_extrato(extrato)
-        case "l":
-            valor = parse_input(int)
-            limite, extrato = alterar_limite(valor, extrato)
-        case "ls":
-            valor = parse_input(int)
-            limite_saques = adicionar_limite_saques(limite_saques, valor)
-        case "q":
+    conta = ContaBancaria()
+
+    while True:
+        opcao = input(menu).lower()
+        if opcao == "d":
+            valor = parse_input("Digite o valor do depósito: R$", float)
+            conta.deposito(valor)
+        elif opcao == "s":
+            print(f'Limite para saques: R${conta.limite:.2f}')
+            valor = parse_input("Digite o valor do saque: R$", float)
+            conta.saque(valor)
+        elif opcao == "e":
+            conta.exibir_extrato()
+        elif opcao == "l":
+            novo_limite = parse_input("Digite o novo valor do limite de saque: R$", float)
+            conta.alterar_limite(novo_limite)
+        elif opcao == "ls":
+            valor = parse_input("Digite o número de saques a adicionar ao limite: ", int)
+            conta.adicionar_limite_saques(valor)
+        elif opcao == "q":
             print("Finalizando programa.")
             break
-        case _:
-            print_no_newline("Operação inválida, por favor selecione novamente a operação desjada.")
+        else:
+            print("Operação inválida, por favor selecione novamente a operação desejada.")
+
+if __name__ == "__main__":
+    main()
